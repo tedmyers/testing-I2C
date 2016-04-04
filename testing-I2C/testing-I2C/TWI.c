@@ -51,7 +51,7 @@ uint8_t TWIRead(bool ack_signal)
 {
     TWCR =  (1<<TWINT) |            // Start the TWI/Clear the TWINT flag
             (1<<TWEN)  |            // enables TWI operation and activates the TWI
-            (ack_signal<<TWEA);      // Generate the acknowledge pulse (or not)
+            (ack_signal<<TWEA);     // Generate the acknowledge pulse (or not)
     
     // wait until TWI has finished its current job
     while ((TWCR & (1<<TWINT)) == 0);

@@ -74,28 +74,58 @@ void initIO(void)
     // initialize TWI pins as outputs/inputs? (may be done in HW later)
 }
 
-void initTWI(void)
+#define MASTER_SENDER_MODE  1
+#define SLAVE_RECEIVER_MODE 2
+
+uint8_t initTWI(uint8_t mode)
 {
-    // TWI Status Register (p.231)
-    TWSR &= ~(1<<TWPS0) | ~(1<<TWPS1); // PrescalarValue = 1
+    switch (mode)
+    {
+        case MASTER_SENDER_MODE:
+            // TWI Status Register (p.231)
+            TWSR &= ~(1<<TWPS0) | ~(1<<TWPS1); // PrescalarValue = 1
+            
+            // TWI Bit Rate Register (p.230)
+            TWBR = 0x01;
+            
+            // TWI Control Register (p.231)
+            TWCR |= (1<<TWEN); // enable TWI
+            
+            return SUCCESS;
+            
+            // Question: is the F_CPU here already prescaled or not?
+            // Could change the answer: 8MHz or 1MHz
+            
+            /*  p.213
+             -----
+             F_SCL   = F_CPU /
+             (16 + 2*TWBR*PrescalarValue)
+             = 8000000 /
+             (16 + 2*1*1
+             = 444.444 kHz?
+             */
+            
+        case SLAVE_RECEIVER_MODE:
+            // TWI Status Register (p.231)
+            TWSR &= ~(1<<TWPS0) | ~(1<<TWPS1); // PrescalarValue = 1
+            
+            // TWI Bit Rate Register (p.230)
+            TWBR = 0x01;
+            
+            // TWI Control Register (p.231)
+            TWCR |= (1<<TWEN) | (1<<TWEA); // enable TWI
+            
+            // Address register
+            TWAR |= (1<<TWGCE); // enable recognition of general call
+            
+            return SUCCESS;
+            
+        default:
+            return ERROR;
+            
+            
+    }
     
-    // TWI Bit Rate Register (p.230)
-    TWBR = 0x01;
-    
-    // TWI Control Register (p.231)
-    TWCR |= (1<<TWEN); // enable TWI
-    
-    // Question: is the F_CPU here already prescaled or not?
-    // Could change the answer: 8MHz or 1MHz
-    
-    /*  p.213
-        -----
-     F_SCL   = F_CPU /
-     (16 + 2*TWBR*PrescalarValue)
-     = 8000000 /
-     (16 + 2*1*1
-     = 444.444 kHz?
-     */
 }
 
 
@@ -103,6 +133,7 @@ void initTWI(void)
 uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
 {
     TWIStart();
+    
     if (TWIGetStatus() != START )           return ERROR;
     
     TWIWrite(red);
@@ -115,11 +146,24 @@ uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
     if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
     
     TWIStop();
+    
     return SUCCESS;
 }
 
 uint8_t receiveColorsTWI(uint8_t *red, uint8_t *green, uint8_t *blue)
 {
+    TWIStart();
+    
+    if (TWIGetStatus() != START )           return ERROR;
+    
+    *red = TWIRead(true); // read w/ACK
+    if (TWIGetStatus() != MT_SLA_ACK )      return ERROR;
+    
+    *green = TWIRead(true); // read w/ACK
+    if (TWIGetStatus() != MT_DATA_ACK )      return ERROR;
+    
+    *blue = TWIRead(true); // read w/ACK
+    if (TWIGetStatus() != MT_DATA_ACK )      return ERROR;
     
 }
 
@@ -135,28 +179,34 @@ int main(void) {
     
         // set true if Master
         #ifdef true
-        
-        // fade all colors up
-        int i;
-        for (i = 0; i < 256; i++)
+        for (;;)
         {
-            sendColorsTWI(i,i,i);
-            _delay_ms(delay_amount);
+            // fade all colors up
+            int i;
+            for (i = 0; i < 256; i++)
+            {
+                sendColorsTWI(i,i,i);
+                _delay_ms(delay_amount);
+            }
+            // fade all colors down
+            int j;
+            for (j = 255; j >= 0; j--)
+            {
+                sendColorsTWI(i,i,i);
+                _delay_ms(delay_amount);
+            }
         }
-        // fade all colors down
-        int j;
-        for (j = 255; j >= 0; j--)
-        {
-            sendColorsTWI(i,i,i);
-            _delay_ms(delay_amount);
-        }
-
-        
         #endif
         
         
-        // set false if Slave
         #ifdef false
+        
+        for (;;)
+        {
+            receiveColorsTWI(&red_data, &green_data, &blue_data)
+        }
+        
+        // set false if Slave
         
         #endif
     
