@@ -4,6 +4,8 @@
 #include <util/delay.h>
 #include <stdbool.h>
 
+#include "TWI.h"
+
 #define RED_PIN     PD3
 #define GREEN_PIN   PD6
 #define BLUE_PIN    PD5
@@ -83,7 +85,6 @@ void initTWI(void)
     // TWI Control Register (p.231)
     TWCR |= (1<<TWEN); // enable TWI
     
-    
     // Question: is the F_CPU here already prescaled or not?
     // Could change the answer: 8MHz or 1MHz
     
@@ -97,63 +98,7 @@ void initTWI(void)
      */
 }
 
-// possibly: have these functions return a bool
-// make them all check a status register, and program
-// reports an error if the bool is false
 
-// Generate TWI start signal (Master only)
-void TWIStart(void)
-{
-    // TWI Control Register (p.231)
-    TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
-            (1<<TWSTA) |   // Checks if bus is open, writes START when available
-            (1<<TWEN);      // enables TWI operation and activates the TWI interface
-    
-    // Wait until TWI has finished its current job
-    // Replace this with interrupt based routine next
-    while ((TWCR & (1<<TWINT)) == 0);
-}
-
-// Generate TWI stop signalm (Master only)
-void TWIStop(void)
-{
-    // TWI Control Register (p.231)
-    TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
-            (1<<TWSTO) |   // generate a STOP condition on the TWI
-    (1<<TWEN);      // enables TWI operation and activates the TWI interface
-}
-
-// write a byte to TWI
-void TWIWrite(uint8_t data_byte)
-{
-    // TWI Data Register (p.232)
-    TWDR = data_byte;
-    TWCR =  (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
-            (1<<TWEN);     // enables TWI operation and activates the TWI interface
-    
-    // wait until TWI has finished its current job
-    while ((TWCR & (1<<TWINT)) == 0);
-}
-
-// Read a byte form TWI, with or without an ACK
-uint8_t TWIRead(bool ack_signal)
-{
-    TWCR =  (1<<TWINT) |            // Start the TWI/Clear the TWINT flag
-            (1<<TWEN)  |            // enables TWI operation and activates the TWI
-            (ack_signal<<TWEA);      // Generate the acknowledge pulse (or not)
-    
-    // wait until TWI has finished its current job
-    while ((TWCR & (1<<TWINT)) == 0);
-    return TWDR;
-}
-
-uint8_t TWIGetStatus(void)
-{
-    uint8_t status;
-    // mask the status
-    status = TWSR & 0xF8;
-    return status;
-}
 
 uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
 {
@@ -173,6 +118,11 @@ uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
     return SUCCESS;
 }
 
+uint8_t receiveColorsTWI(uint8_t *red, uint8_t *green, uint8_t *blue)
+{
+    
+}
+
 int main(void) {
     
 	initIO();
@@ -187,13 +137,15 @@ int main(void) {
         #ifdef true
         
         // fade all colors up
-        for (int i = 0; i < 256; i++)
+        int i;
+        for (i = 0; i < 256; i++)
         {
             sendColorsTWI(i,i,i);
             _delay_ms(delay_amount);
         }
         // fade all colors down
-        for (int j = 255; j >= 0; j--)
+        int j;
+        for (j = 255; j >= 0; j--)
         {
             sendColorsTWI(i,i,i);
             _delay_ms(delay_amount);

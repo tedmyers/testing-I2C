@@ -7,10 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C436EE051CB326CC0034548F /* TWI.c in Sources */ = {isa = PBXBuildFile; fileRef = C436EE031CB326CC0034548F /* TWI.c */; };
 		C442E1741CADFC9C0037334D /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = C442E1731CADFC9C0037334D /* main.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C436EE031CB326CC0034548F /* TWI.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TWI.c; sourceTree = "<group>"; };
+		C436EE041CB326CC0034548F /* TWI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TWI.h; sourceTree = "<group>"; };
 		C442E1701CADFC9C0037334D /* Index */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Index; sourceTree = BUILT_PRODUCTS_DIR; };
 		C442E1731CADFC9C0037334D /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		C442E1761CADFC9C0037334D /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
@@ -37,6 +40,8 @@
 			isa = PBXGroup;
 			children = (
 				C442E1731CADFC9C0037334D /* main.c */,
+				C436EE031CB326CC0034548F /* TWI.c */,
+				C436EE041CB326CC0034548F /* TWI.h */,
 				C442E1751CADFC9C0037334D /* Makefiles */,
 			);
 			path = "testing-I2C";
@@ -175,6 +180,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C436EE051CB326CC0034548F /* TWI.c in Sources */,
 				C442E1741CADFC9C0037334D /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -355,6 +361,7 @@
 				C442E17B1CADFC9C0037334D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C442E17C1CADFC9C0037334D /* Build configuration list for PBXLegacyTarget "Build" */ = {
 			isa = XCConfigurationList;
@@ -363,6 +370,7 @@
 				C442E17E1CADFC9C0037334D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C442E17F1CADFC9C0037334D /* Build configuration list for PBXLegacyTarget "Upload" */ = {
 			isa = XCConfigurationList;
@@ -371,6 +379,7 @@
 				C442E1811CADFC9C0037334D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C442E1821CADFC9C0037334D /* Build configuration list for PBXLegacyTarget "Clean" */ = {
 			isa = XCConfigurationList;
@@ -379,6 +388,7 @@
 				C442E1841CADFC9C0037334D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C442E1851CADFC9C0037334D /* Build configuration list for PBXNativeTarget "Index" */ = {
 			isa = XCConfigurationList;
@@ -387,6 +397,7 @@
 				C442E1871CADFC9C0037334D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

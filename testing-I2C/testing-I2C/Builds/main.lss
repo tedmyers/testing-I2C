@@ -3,23 +3,23 @@ Builds/main.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00000170  000001e4  2**0
+  0 .data         00000000  00800100  000001a8  0000021c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         00000170  00000000  00000000  00000074  2**1
+  1 .text         000001a8  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .stab         0000078c  00000000  00000000  000001e4  2**2
+  2 .stab         00000b40  00000000  00000000  0000021c  2**2
                   CONTENTS, READONLY, DEBUGGING
-  3 .stabstr      00000e69  00000000  00000000  00000970  2**0
+  3 .stabstr      00000f74  00000000  00000000  00000d5c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  4 .comment      00000011  00000000  00000000  000017d9  2**0
+  4 .comment      00000011  00000000  00000000  00001cd0  2**0
                   CONTENTS, READONLY
-  5 .debug_aranges 00000020  00000000  00000000  000017f0  2**3
+  5 .debug_aranges 00000020  00000000  00000000  00001ce8  2**3
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   000000be  00000000  00000000  00001810  2**0
+  6 .debug_info   000000be  00000000  00000000  00001d08  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000014  00000000  00000000  000018ce  2**0
+  7 .debug_abbrev 00000014  00000000  00000000  00001dc6  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   00000058  00000000  00000000  000018e2  2**0
+  8 .debug_line   00000058  00000000  00000000  00001dda  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -59,271 +59,303 @@ Disassembly of section .text:
   6e:	d8 e0       	ldi	r29, 0x08	; 8
   70:	de bf       	out	0x3e, r29	; 62
   72:	cd bf       	out	0x3d, r28	; 61
-  74:	0e 94 b1 00 	call	0x162	; 0x162 <main>
-  78:	0c 94 b6 00 	jmp	0x16c	; 0x16c <_exit>
+  74:	0e 94 a8 00 	call	0x150	; 0x150 <main>
+  78:	0c 94 d2 00 	jmp	0x1a4	; 0x1a4 <_exit>
 
 0000007c <__bad_interrupt>:
   7c:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
-00000080 <initIO>:
- ******************************/
- 
-void initIO(void)
-{
-    // initialize LED
-    LED_DDR |= (1 << RED_PIN) | (1 << GREEN_PIN) | (1 << BLUE_PIN);
-  80:	8a b1       	in	r24, 0x0a	; 10
-  82:	88 66       	ori	r24, 0x68	; 104
-  84:	8a b9       	out	0x0a, r24	; 10
-  86:	08 95       	ret
-
-00000088 <initTWI>:
-}
-
-void initTWI(void)
-{
-    // TWI Status Register (p.231)
-    TWSR &= ~(1<<TWPS0) | ~(1<<TWPS1); // PrescalarValue = 1
-  88:	e9 eb       	ldi	r30, 0xB9	; 185
-  8a:	f0 e0       	ldi	r31, 0x00	; 0
-  8c:	80 81       	ld	r24, Z
-  8e:	80 83       	st	Z, r24
-    
-    // TWI Bit Rate Register (p.230)
-    TWBR = 0x01;
-  90:	81 e0       	ldi	r24, 0x01	; 1
-  92:	80 93 b8 00 	sts	0x00B8, r24
-    
-    // TWI Control Register (p.231)
-    TWCR |= (1<<TWEN); // enable TWI
-  96:	ec eb       	ldi	r30, 0xBC	; 188
-  98:	f0 e0       	ldi	r31, 0x00	; 0
-  9a:	80 81       	ld	r24, Z
-  9c:	84 60       	ori	r24, 0x04	; 4
-  9e:	80 83       	st	Z, r24
-  a0:	08 95       	ret
-
-000000a2 <TWIStart>:
+00000080 <TWIStart>:
 
 // Generate TWI start signal (Master only)
 void TWIStart(void)
 {
     // TWI Control Register (p.231)
     TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
-  a2:	80 91 bc 00 	lds	r24, 0x00BC
-  a6:	84 6a       	ori	r24, 0xA4	; 164
-  a8:	80 93 bc 00 	sts	0x00BC, r24
+  80:	80 91 bc 00 	lds	r24, 0x00BC
+  84:	84 6a       	ori	r24, 0xA4	; 164
+  86:	80 93 bc 00 	sts	0x00BC, r24
             (1<<TWSTA) |   // Checks if bus is open, writes START when available
             (1<<TWEN);      // enables TWI operation and activates the TWI interface
     
     // Wait until TWI has finished its current job
     // Replace this with interrupt based routine next
     while ((TWCR & (1<<TWINT)) == 0);
-  ac:	80 91 bc 00 	lds	r24, 0x00BC
-  b0:	87 ff       	sbrs	r24, 7
-  b2:	fc cf       	rjmp	.-8      	; 0xac <TWIStart+0xa>
+  8a:	80 91 bc 00 	lds	r24, 0x00BC
+  8e:	87 ff       	sbrs	r24, 7
+  90:	fc cf       	rjmp	.-8      	; 0x8a <TWIStart+0xa>
 }
-  b4:	08 95       	ret
+  92:	08 95       	ret
 
-000000b6 <TWIStop>:
+00000094 <TWIStop>:
 
 // Generate TWI stop signalm (Master only)
 void TWIStop(void)
 {
     // TWI Control Register (p.231)
     TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
-  b6:	ec eb       	ldi	r30, 0xBC	; 188
-  b8:	f0 e0       	ldi	r31, 0x00	; 0
-  ba:	80 81       	ld	r24, Z
-  bc:	84 69       	ori	r24, 0x94	; 148
-  be:	80 83       	st	Z, r24
-  c0:	08 95       	ret
+  94:	ec eb       	ldi	r30, 0xBC	; 188
+  96:	f0 e0       	ldi	r31, 0x00	; 0
+  98:	80 81       	ld	r24, Z
+  9a:	84 69       	ori	r24, 0x94	; 148
+  9c:	80 83       	st	Z, r24
+  9e:	08 95       	ret
 
-000000c2 <TWIWrite>:
+000000a0 <TWIWrite>:
 
 // write a byte to TWI
 void TWIWrite(uint8_t data_byte)
 {
     // TWI Data Register (p.232)
     TWDR = data_byte;
-  c2:	80 93 bb 00 	sts	0x00BB, r24
+  a0:	80 93 bb 00 	sts	0x00BB, r24
     TWCR =  (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
-  c6:	84 e8       	ldi	r24, 0x84	; 132
-  c8:	80 93 bc 00 	sts	0x00BC, r24
+  a4:	84 e8       	ldi	r24, 0x84	; 132
+  a6:	80 93 bc 00 	sts	0x00BC, r24
             (1<<TWEN);     // enables TWI operation and activates the TWI interface
     
     // wait until TWI has finished its current job
     while ((TWCR & (1<<TWINT)) == 0);
-  cc:	80 91 bc 00 	lds	r24, 0x00BC
-  d0:	87 ff       	sbrs	r24, 7
-  d2:	fc cf       	rjmp	.-8      	; 0xcc <TWIWrite+0xa>
+  aa:	80 91 bc 00 	lds	r24, 0x00BC
+  ae:	87 ff       	sbrs	r24, 7
+  b0:	fc cf       	rjmp	.-8      	; 0xaa <TWIWrite+0xa>
 }
-  d4:	08 95       	ret
+  b2:	08 95       	ret
 
-000000d6 <TWIRead>:
+000000b4 <TWIRead>:
 // Read a byte form TWI, with or without an ACK
 uint8_t TWIRead(bool ack_signal)
 {
     TWCR =  (1<<TWINT) |            // Start the TWI/Clear the TWINT flag
             (1<<TWEN)  |            // enables TWI operation and activates the TWI
             (ack_signal<<TWEA);      // Generate the acknowledge pulse (or not)
-  d6:	20 e4       	ldi	r18, 0x40	; 64
-  d8:	82 9f       	mul	r24, r18
-  da:	c0 01       	movw	r24, r0
-  dc:	11 24       	eor	r1, r1
+  b4:	20 e4       	ldi	r18, 0x40	; 64
+  b6:	82 9f       	mul	r24, r18
+  b8:	c0 01       	movw	r24, r0
+  ba:	11 24       	eor	r1, r1
 }
 
 // Read a byte form TWI, with or without an ACK
 uint8_t TWIRead(bool ack_signal)
 {
     TWCR =  (1<<TWINT) |            // Start the TWI/Clear the TWINT flag
-  de:	84 68       	ori	r24, 0x84	; 132
-  e0:	80 93 bc 00 	sts	0x00BC, r24
+  bc:	84 68       	ori	r24, 0x84	; 132
+  be:	80 93 bc 00 	sts	0x00BC, r24
             (1<<TWEN)  |            // enables TWI operation and activates the TWI
             (ack_signal<<TWEA);      // Generate the acknowledge pulse (or not)
     
     // wait until TWI has finished its current job
     while ((TWCR & (1<<TWINT)) == 0);
-  e4:	80 91 bc 00 	lds	r24, 0x00BC
-  e8:	87 ff       	sbrs	r24, 7
-  ea:	fc cf       	rjmp	.-8      	; 0xe4 <TWIRead+0xe>
+  c2:	80 91 bc 00 	lds	r24, 0x00BC
+  c6:	87 ff       	sbrs	r24, 7
+  c8:	fc cf       	rjmp	.-8      	; 0xc2 <TWIRead+0xe>
     return TWDR;
-  ec:	80 91 bb 00 	lds	r24, 0x00BB
+  ca:	80 91 bb 00 	lds	r24, 0x00BB
 }
-  f0:	08 95       	ret
+  ce:	08 95       	ret
 
-000000f2 <TWIGetStatus>:
+000000d0 <TWIGetStatus>:
 
 uint8_t TWIGetStatus(void)
 {
     uint8_t status;
     // mask the status
     status = TWSR & 0xF8;
-  f2:	80 91 b9 00 	lds	r24, 0x00B9
+  d0:	80 91 b9 00 	lds	r24, 0x00B9
     return status;
+  d4:	88 7f       	andi	r24, 0xF8	; 248
+  d6:	08 95       	ret
+
+000000d8 <initIO>:
+ ******************************/
+ 
+void initIO(void)
+{
+    // initialize LED
+    LED_DDR |= (1 << RED_PIN) | (1 << GREEN_PIN) | (1 << BLUE_PIN);
+  d8:	8a b1       	in	r24, 0x0a	; 10
+  da:	88 66       	ori	r24, 0x68	; 104
+  dc:	8a b9       	out	0x0a, r24	; 10
+  de:	08 95       	ret
+
+000000e0 <initTWI>:
 }
-  f6:	88 7f       	andi	r24, 0xF8	; 248
+
+void initTWI(void)
+{
+    // TWI Status Register (p.231)
+    TWSR &= ~(1<<TWPS0) | ~(1<<TWPS1); // PrescalarValue = 1
+  e0:	e9 eb       	ldi	r30, 0xB9	; 185
+  e2:	f0 e0       	ldi	r31, 0x00	; 0
+  e4:	80 81       	ld	r24, Z
+  e6:	80 83       	st	Z, r24
+    
+    // TWI Bit Rate Register (p.230)
+    TWBR = 0x01;
+  e8:	81 e0       	ldi	r24, 0x01	; 1
+  ea:	80 93 b8 00 	sts	0x00B8, r24
+    
+    // TWI Control Register (p.231)
+    TWCR |= (1<<TWEN); // enable TWI
+  ee:	ec eb       	ldi	r30, 0xBC	; 188
+  f0:	f0 e0       	ldi	r31, 0x00	; 0
+  f2:	80 81       	ld	r24, Z
+  f4:	84 60       	ori	r24, 0x04	; 4
+  f6:	80 83       	st	Z, r24
   f8:	08 95       	ret
 
 000000fa <sendColorsTWI>:
-
-uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
-{
-  fa:	0f 93       	push	r16
-  fc:	1f 93       	push	r17
-  fe:	cf 93       	push	r28
- 100:	df 93       	push	r29
- 102:	1f 92       	push	r1
- 104:	cd b7       	in	r28, 0x3d	; 61
- 106:	de b7       	in	r29, 0x3e	; 62
- 108:	06 2f       	mov	r16, r22
- 10a:	14 2f       	mov	r17, r20
-    TWIStart();
- 10c:	89 83       	std	Y+1, r24	; 0x01
- 10e:	0e 94 51 00 	call	0xa2	; 0xa2 <TWIStart>
-
-uint8_t TWIGetStatus(void)
-{
-    uint8_t status;
-    // mask the status
-    status = TWSR & 0xF8;
- 112:	90 91 b9 00 	lds	r25, 0x00B9
- 116:	98 7f       	andi	r25, 0xF8	; 248
 }
 
+
+
 uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
 {
+  fa:	1f 93       	push	r17
+  fc:	cf 93       	push	r28
+  fe:	df 93       	push	r29
+ 100:	18 2f       	mov	r17, r24
+ 102:	d6 2f       	mov	r29, r22
+ 104:	c4 2f       	mov	r28, r20
     TWIStart();
+ 106:	0e 94 40 00 	call	0x80	; 0x80 <TWIStart>
     if (TWIGetStatus() != START )           return ERROR;
- 118:	89 81       	ldd	r24, Y+1	; 0x01
- 11a:	98 30       	cpi	r25, 0x08	; 8
- 11c:	11 f0       	breq	.+4      	; 0x122 <sendColorsTWI+0x28>
- 11e:	81 e0       	ldi	r24, 0x01	; 1
- 120:	1a c0       	rjmp	.+52     	; 0x156 <sendColorsTWI+0x5c>
+ 10a:	0e 94 68 00 	call	0xd0	; 0xd0 <TWIGetStatus>
+ 10e:	88 30       	cpi	r24, 0x08	; 8
+ 110:	c9 f4       	brne	.+50     	; 0x144 <sendColorsTWI+0x4a>
     
     TWIWrite(red);
- 122:	0e 94 61 00 	call	0xc2	; 0xc2 <TWIWrite>
-
-uint8_t TWIGetStatus(void)
-{
-    uint8_t status;
-    // mask the status
-    status = TWSR & 0xF8;
- 126:	90 91 b9 00 	lds	r25, 0x00B9
- 12a:	98 7f       	andi	r25, 0xF8	; 248
-{
-    TWIStart();
-    if (TWIGetStatus() != START )           return ERROR;
-    
-    TWIWrite(red);
+ 112:	81 2f       	mov	r24, r17
+ 114:	0e 94 50 00 	call	0xa0	; 0xa0 <TWIWrite>
     if (TWIGetStatus() != MT_SLA_ACK )      return ERROR;
- 12c:	98 31       	cpi	r25, 0x18	; 24
- 12e:	b9 f7       	brne	.-18     	; 0x11e <sendColorsTWI+0x24>
+ 118:	0e 94 68 00 	call	0xd0	; 0xd0 <TWIGetStatus>
+ 11c:	88 31       	cpi	r24, 0x18	; 24
+ 11e:	91 f4       	brne	.+36     	; 0x144 <sendColorsTWI+0x4a>
     
     TWIWrite(green);
- 130:	80 2f       	mov	r24, r16
- 132:	0e 94 61 00 	call	0xc2	; 0xc2 <TWIWrite>
-
-uint8_t TWIGetStatus(void)
-{
-    uint8_t status;
-    // mask the status
-    status = TWSR & 0xF8;
- 136:	90 91 b9 00 	lds	r25, 0x00B9
- 13a:	98 7f       	andi	r25, 0xF8	; 248
-    
-    TWIWrite(red);
-    if (TWIGetStatus() != MT_SLA_ACK )      return ERROR;
-    
-    TWIWrite(green);
+ 120:	8d 2f       	mov	r24, r29
+ 122:	0e 94 50 00 	call	0xa0	; 0xa0 <TWIWrite>
     if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
- 13c:	98 32       	cpi	r25, 0x28	; 40
- 13e:	79 f7       	brne	.-34     	; 0x11e <sendColorsTWI+0x24>
+ 126:	0e 94 68 00 	call	0xd0	; 0xd0 <TWIGetStatus>
+ 12a:	88 32       	cpi	r24, 0x28	; 40
+ 12c:	59 f4       	brne	.+22     	; 0x144 <sendColorsTWI+0x4a>
     
     TWIWrite(blue);
- 140:	81 2f       	mov	r24, r17
- 142:	0e 94 61 00 	call	0xc2	; 0xc2 <TWIWrite>
-
-uint8_t TWIGetStatus(void)
-{
-    uint8_t status;
-    // mask the status
-    status = TWSR & 0xF8;
- 146:	80 91 b9 00 	lds	r24, 0x00B9
- 14a:	88 7f       	andi	r24, 0xF8	; 248
-    
-    TWIWrite(green);
+ 12e:	8c 2f       	mov	r24, r28
+ 130:	0e 94 50 00 	call	0xa0	; 0xa0 <TWIWrite>
     if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
-    
-    TWIWrite(blue);
-    if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
- 14c:	88 32       	cpi	r24, 0x28	; 40
- 14e:	39 f7       	brne	.-50     	; 0x11e <sendColorsTWI+0x24>
+ 134:	0e 94 68 00 	call	0xd0	; 0xd0 <TWIGetStatus>
+ 138:	88 32       	cpi	r24, 0x28	; 40
+ 13a:	21 f4       	brne	.+8      	; 0x144 <sendColorsTWI+0x4a>
     
     TWIStop();
- 150:	0e 94 5b 00 	call	0xb6	; 0xb6 <TWIStop>
+ 13c:	0e 94 4a 00 	call	0x94	; 0x94 <TWIStop>
     return SUCCESS;
- 154:	80 e0       	ldi	r24, 0x00	; 0
+ 140:	80 e0       	ldi	r24, 0x00	; 0
+ 142:	01 c0       	rjmp	.+2      	; 0x146 <sendColorsTWI+0x4c>
+    
+    TWIWrite(green);
+    if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
+    
+    TWIWrite(blue);
+    if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
+ 144:	81 e0       	ldi	r24, 0x01	; 1
+    
+    TWIStop();
+    return SUCCESS;
 }
- 156:	0f 90       	pop	r0
- 158:	df 91       	pop	r29
- 15a:	cf 91       	pop	r28
- 15c:	1f 91       	pop	r17
- 15e:	0f 91       	pop	r16
- 160:	08 95       	ret
+ 146:	df 91       	pop	r29
+ 148:	cf 91       	pop	r28
+ 14a:	1f 91       	pop	r17
+ 14c:	08 95       	ret
 
-00000162 <main>:
+0000014e <receiveColorsTWI>:
+
+uint8_t receiveColorsTWI(uint8_t *red, uint8_t *green, uint8_t *blue)
+{
+    
+}
+ 14e:	08 95       	ret
+
+00000150 <main>:
 
 int main(void) {
     
 	initIO();
- 162:	0e 94 40 00 	call	0x80	; 0x80 <initIO>
+ 150:	0e 94 6c 00 	call	0xd8	; 0xd8 <initIO>
     initTWI();
- 166:	0e 94 44 00 	call	0x88	; 0x88 <initTWI>
- 16a:	ff cf       	rjmp	.-2      	; 0x16a <main+0x8>
+ 154:	0e 94 70 00 	call	0xe0	; 0xe0 <initTWI>
+        // set true if Master
+        #ifdef true
+        
+        // fade all colors up
+        int i;
+        for (i = 0; i < 256; i++)
+ 158:	c0 e0       	ldi	r28, 0x00	; 0
+ 15a:	d0 e0       	ldi	r29, 0x00	; 0
+ 15c:	cf 3f       	cpi	r28, 0xFF	; 255
+ 15e:	d1 05       	cpc	r29, r1
+ 160:	09 f0       	breq	.+2      	; 0x164 <main+0x14>
+ 162:	6c f4       	brge	.+26     	; 0x17e <main+0x2e>
+        {
+            sendColorsTWI(i,i,i);
+ 164:	4c 2f       	mov	r20, r28
+ 166:	6c 2f       	mov	r22, r28
+ 168:	8c 2f       	mov	r24, r28
+ 16a:	0e 94 7d 00 	call	0xfa	; 0xfa <sendColorsTWI>
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
 
-0000016c <_exit>:
- 16c:	f8 94       	cli
+	__builtin_avr_delay_cycles(__ticks_dc);
+ 16e:	87 e8       	ldi	r24, 0x87	; 135
+ 170:	93 e1       	ldi	r25, 0x13	; 19
+ 172:	01 97       	sbiw	r24, 0x01	; 1
+ 174:	f1 f7       	brne	.-4      	; 0x172 <main+0x22>
+ 176:	00 c0       	rjmp	.+0      	; 0x178 <main+0x28>
+ 178:	00 00       	nop
+        // set true if Master
+        #ifdef true
+        
+        // fade all colors up
+        int i;
+        for (i = 0; i < 256; i++)
+ 17a:	21 96       	adiw	r28, 0x01	; 1
+ 17c:	ef cf       	rjmp	.-34     	; 0x15c <main+0xc>
+ 17e:	00 e0       	ldi	r16, 0x00	; 0
+ 180:	11 e0       	ldi	r17, 0x01	; 1
+        }
+        // fade all colors down
+        int j;
+        for (j = 255; j >= 0; j--)
+        {
+            sendColorsTWI(i,i,i);
+ 182:	4c 2f       	mov	r20, r28
+ 184:	6c 2f       	mov	r22, r28
+ 186:	8c 2f       	mov	r24, r28
+ 188:	0e 94 7d 00 	call	0xfa	; 0xfa <sendColorsTWI>
+ 18c:	87 e8       	ldi	r24, 0x87	; 135
+ 18e:	93 e1       	ldi	r25, 0x13	; 19
+ 190:	01 97       	sbiw	r24, 0x01	; 1
+ 192:	f1 f7       	brne	.-4      	; 0x190 <main+0x40>
+ 194:	00 c0       	rjmp	.+0      	; 0x196 <main+0x46>
+ 196:	00 00       	nop
+ 198:	01 50       	subi	r16, 0x01	; 1
+ 19a:	11 09       	sbc	r17, r1
+            sendColorsTWI(i,i,i);
+            _delay_ms(delay_amount);
+        }
+        // fade all colors down
+        int j;
+        for (j = 255; j >= 0; j--)
+ 19c:	01 15       	cp	r16, r1
+ 19e:	11 05       	cpc	r17, r1
+ 1a0:	81 f7       	brne	.-32     	; 0x182 <main+0x32>
+ 1a2:	da cf       	rjmp	.-76     	; 0x158 <main+0x8>
 
-0000016e <__stop_program>:
- 16e:	ff cf       	rjmp	.-2      	; 0x16e <__stop_program>
+000001a4 <_exit>:
+ 1a4:	f8 94       	cli
+
+000001a6 <__stop_program>:
+ 1a6:	ff cf       	rjmp	.-2      	; 0x1a6 <__stop_program>

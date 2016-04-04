@@ -19,6 +19,7 @@ Linker script and memory map
 
 Address of section .data set to 0x800100
 LOAD /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
+LOAD Builds/TWI.o
 LOAD Builds/main.o
 LOAD /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/libm.a
 START GROUP
@@ -117,7 +118,7 @@ END GROUP
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000      0x170
+.text           0x00000000      0x1a8
  *(.vectors)
  .vectors       0x00000000       0x68 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
                 0x00000000                __vectors
@@ -196,38 +197,40 @@ END GROUP
                 0x0000007c                __vector_16
                 0x0000007c                __vector_18
                 0x0000007c                __vector_22
- .text          0x00000080       0xe2 Builds/main.o
-                0x00000080                initIO
-                0x00000088                initTWI
-                0x000000a2                TWIStart
-                0x000000b6                TWIStop
-                0x000000c2                TWIWrite
-                0x000000d6                TWIRead
-                0x000000f2                TWIGetStatus
+ .text          0x00000080       0x58 Builds/TWI.o
+                0x00000080                TWIStart
+                0x00000094                TWIStop
+                0x000000a0                TWIWrite
+                0x000000b4                TWIRead
+                0x000000d0                TWIGetStatus
+ .text          0x000000d8       0x78 Builds/main.o
+                0x000000d8                initIO
+                0x000000e0                initTWI
                 0x000000fa                sendColorsTWI
- .text          0x00000162        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
-                0x00000162                . = ALIGN (0x2)
+                0x0000014e                receiveColorsTWI
+ .text          0x00000150        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x00000150                . = ALIGN (0x2)
  *(.text.*)
- .text.startup  0x00000162        0xa Builds/main.o
-                0x00000162                main
+ .text.startup  0x00000150       0x54 Builds/main.o
+                0x00000150                main
  .text.libgcc.mul
-                0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  .text.libgcc.div
-                0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
- .text.libgcc   0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+ .text.libgcc   0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  .text.libgcc.prologue
-                0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  .text.libgcc.builtins
-                0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  .text.libgcc.fmul
-                0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  .text.libgcc.fixed
-                0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
-                0x0000016c                . = ALIGN (0x2)
+                0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x000001a4                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x0000016c        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
-                0x0000016c                exit
-                0x0000016c                _exit
+ .fini9         0x000001a4        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+                0x000001a4                exit
+                0x000001a4                _exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -246,14 +249,15 @@ END GROUP
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x0000016c        0x4 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
+ .fini0         0x000001a4        0x4 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  *(.fini0)
-                0x00000170                _etext = .
+                0x000001a8                _etext = .
 
-.data           0x00800100        0x0 load address 0x00000170
+.data           0x00800100        0x0 load address 0x000001a8
                 0x00800100                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00800100        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
+ .data          0x00800100        0x0 Builds/TWI.o
  .data          0x00800100        0x0 Builds/main.o
  .data          0x00800100        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  *(.data*)
@@ -268,13 +272,14 @@ END GROUP
                 0x00800100                PROVIDE (__bss_start, .)
  *(.bss)
  .bss           0x00800100        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
+ .bss           0x00800100        0x0 Builds/TWI.o
  .bss           0x00800100        0x0 Builds/main.o
  .bss           0x00800100        0x0 /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/avr5/libgcc.a(_exit.o)
  *(.bss*)
  *(COMMON)
                 0x00800100                PROVIDE (__bss_end, .)
-                0x00000170                __data_load_start = LOADADDR (.data)
-                0x00000170                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x000001a8                __data_load_start = LOADADDR (.data)
+                0x000001a8                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800100        0x0
                 0x00800100                PROVIDE (__noinit_start, .)
@@ -302,13 +307,15 @@ END GROUP
 .user_signatures
  *(.user_signatures*)
 
-.stab           0x00000000      0x78c
+.stab           0x00000000      0xb40
  *(.stab)
- .stab          0x00000000      0x78c Builds/main.o
+ .stab          0x00000000      0x624 Builds/TWI.o
+ .stab          0x00000624      0x51c Builds/main.o
+                                0x72c (size before relaxing)
 
-.stabstr        0x00000000      0xe69
+.stabstr        0x00000000      0xf74
  *(.stabstr)
- .stabstr       0x00000000      0xe69 Builds/main.o
+ .stabstr       0x00000000      0xf74 Builds/TWI.o
 
 .stab.excl
  *(.stab.excl)
@@ -324,8 +331,9 @@ END GROUP
 
 .comment        0x00000000       0x11
  *(.comment)
- .comment       0x00000000       0x11 Builds/main.o
+ .comment       0x00000000       0x11 Builds/TWI.o
                                  0x12 (size before relaxing)
+ .comment       0x00000000       0x12 Builds/main.o
 
 .debug
  *(.debug)
@@ -386,11 +394,15 @@ LOAD linker stubs
 Cross Reference Table
 
 Symbol                                            File
-TWIGetStatus                                      Builds/main.o
-TWIRead                                           Builds/main.o
-TWIStart                                          Builds/main.o
-TWIStop                                           Builds/main.o
-TWIWrite                                          Builds/main.o
+TWIGetStatus                                      Builds/TWI.o
+                                                  Builds/main.o
+TWIRead                                           Builds/TWI.o
+TWIStart                                          Builds/TWI.o
+                                                  Builds/main.o
+TWIStop                                           Builds/TWI.o
+                                                  Builds/main.o
+TWIWrite                                          Builds/TWI.o
+                                                  Builds/main.o
 __bad_interrupt                                   /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
 __heap_end                                        /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
 __init                                            /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
@@ -429,4 +441,5 @@ initIO                                            Builds/main.o
 initTWI                                           Builds/main.o
 main                                              Builds/main.o
                                                   /usr/local/CrossPack-AVR-20131216/lib/gcc/avr/4.8.1/../../../../avr/lib/avr5/crtm328p.o
+receiveColorsTWI                                  Builds/main.o
 sendColorsTWI                                     Builds/main.o
