@@ -1,0 +1,453 @@
+   1               		.file	"main.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   8               		.text
+   9               	.Ltext0:
+ 110               	.global	initIO
+ 112               	initIO:
+   1:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #include <stdio.h>
+   2:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #include <avr/io.h>
+   3:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #include <avr/interrupt.h>
+   4:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #include <util/delay.h>
+   5:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #include <stdbool.h>
+   6:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+   7:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define RED_PIN     PD3
+   8:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define GREEN_PIN   PD6
+   9:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define BLUE_PIN    PD5
+  10:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define ROT_A       PC0
+  11:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define ROT_B       PC1
+  12:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define BUTTON      PC3
+  13:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define LED_DDR     DDRD
+  14:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define LED_PORT    PORTD
+  15:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+  16:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define START       0x08
+  17:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define MT_SLA_ACK  0x18
+  18:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define MT_DATA_ACK 0x28
+  19:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+  20:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define ERROR   1
+  21:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** #define SUCCESS 0
+  22:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+  23:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** /******************************
+  24:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  25:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  testing-I2C: A program to learn about and 
+  26:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  use the I2C communication protocol
+  27:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  28:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Useful information and tutorial at the following link:
+  29:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  http://www.embedds.com/programming-avr-i2c-interface/
+  30:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  (this program based off of examples provided there)
+  31:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  32:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  33:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  I2C allows control of up to 128 devices
+  34:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  35:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Uses two pins for communication:
+  36:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  -SCK (System Clock)
+  37:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  -SDA (System Data)
+  38:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  39:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  These pins are pulled high, and are set low to communicate.
+  40:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  This allows easier communication by devices at slightly different
+  41:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  logic levels (e.g. Atmega328 @ 5V vs. Raspberry Pi @ 3.3V)
+  42:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  43:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Parts of I2C communication:
+  44:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  START  signal
+  45:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Address Packet     |   Seven bits, lead by data direction bit + acknowledge bit
+  46:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Data Packet        |   Eight data bits + acknowledge bit
+  47:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  STOP signal
+  48:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  49:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  START and STOP signals are always generated by the master.
+  50:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  These are generated by pulling SDA low while SCL is high
+  51:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  52:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Acknowledge bit:
+  53:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Receiver always needs to confirm data received by pulling SDA
+  54:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  low (ACK) or leave high (NACK) to indicate no data received.
+  55:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  56:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  I2C can send multiple bytes in a single packet.
+  57:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  This will be useful to send color data later on to the light
+  58:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  strip controller. We will need to send three bytes of data,
+  59:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  eight bits for each color brightness level.
+  60:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  61:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  Note: AVR uses the term TWI (two-wire interface) to refer
+  62:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  to I2C due to copyright issues. It is the same otherwise
+  63:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  64:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  65:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  ******************************/
+  66:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****  
+  67:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** void initIO(void)
+  68:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 114               	.LM0:
+ 115               	.LFBB1:
+ 116               	/* prologue: function */
+ 117               	/* frame size = 0 */
+ 118               	/* stack size = 0 */
+ 119               	.L__stack_usage = 0
+  69:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // initialize LED
+  70:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     LED_DDR |= (1 << RED_PIN) | (1 << GREEN_PIN) | (1 << BLUE_PIN);
+ 121               	.LM1:
+ 122 0000 8AB1      		in r24,0xa
+ 123 0002 8866      		ori r24,lo8(104)
+ 124 0004 8AB9      		out 0xa,r24
+ 125 0006 0895      		ret
+ 127               	.Lscope1:
+ 129               	.global	initTWI
+ 131               	initTWI:
+  71:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+  72:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // initialize TWI pins as outputs/inputs? (may be done in HW later)
+  73:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+  74:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+  75:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** void initTWI(void)
+  76:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 133               	.LM2:
+ 134               	.LFBB2:
+ 135               	/* prologue: function */
+ 136               	/* frame size = 0 */
+ 137               	/* stack size = 0 */
+ 138               	.L__stack_usage = 0
+  77:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // TWI Status Register (p.231)
+  78:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWSR &= ~(1<<TWPS0) | ~(1<<TWPS1); // PrescalarValue = 1
+ 140               	.LM3:
+ 141 0008 E9EB      		ldi r30,lo8(-71)
+ 142 000a F0E0      		ldi r31,0
+ 143 000c 8081      		ld r24,Z
+ 144 000e 8083      		st Z,r24
+  79:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+  80:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // TWI Bit Rate Register (p.230)
+  81:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWBR = 0x01;
+ 146               	.LM4:
+ 147 0010 81E0      		ldi r24,lo8(1)
+ 148 0012 8093 B800 		sts 184,r24
+  82:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+  83:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // TWI Control Register (p.231)
+  84:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWCR |= (1<<TWEN); // enable TWI
+ 150               	.LM5:
+ 151 0016 ECEB      		ldi r30,lo8(-68)
+ 152 0018 F0E0      		ldi r31,0
+ 153 001a 8081      		ld r24,Z
+ 154 001c 8460      		ori r24,lo8(4)
+ 155 001e 8083      		st Z,r24
+ 156 0020 0895      		ret
+ 158               	.Lscope2:
+ 160               	.global	TWIStart
+ 162               	TWIStart:
+  85:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+  86:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+  87:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // Question: is the F_CPU here already prescaled or not?
+  88:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // Could change the answer: 8MHz or 1MHz
+  89:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+  90:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     /*  p.213
+  91:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****         -----
+  92:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****      F_SCL   = F_CPU /
+  93:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****      (16 + 2*TWBR*PrescalarValue)
+  94:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****      = 8000000 /
+  95:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****      (16 + 2*1*1
+  96:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****      = 444.444 kHz?
+  97:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****      */
+  98:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+  99:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 100:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** // possibly: have these functions return a bool
+ 101:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** // make them all check a status register, and program
+ 102:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** // reports an error if the bool is false
+ 103:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 104:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** // Generate TWI start signal (Master only)
+ 105:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** void TWIStart(void)
+ 106:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 164               	.LM6:
+ 165               	.LFBB3:
+ 166               	/* prologue: function */
+ 167               	/* frame size = 0 */
+ 168               	/* stack size = 0 */
+ 169               	.L__stack_usage = 0
+ 107:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // TWI Control Register (p.231)
+ 108:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
+ 171               	.LM7:
+ 172 0022 8091 BC00 		lds r24,188
+ 173 0026 846A      		ori r24,lo8(-92)
+ 174 0028 8093 BC00 		sts 188,r24
+ 175               	.L5:
+ 109:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****             (1<<TWSTA) |   // Checks if bus is open, writes START when available
+ 110:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****             (1<<TWEN);      // enables TWI operation and activates the TWI interface
+ 111:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 112:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // Wait until TWI has finished its current job
+ 113:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // Replace this with interrupt based routine next
+ 114:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     while ((TWCR & (1<<TWINT)) == 0);
+ 177               	.LM8:
+ 178 002c 8091 BC00 		lds r24,188
+ 179 0030 87FF      		sbrs r24,7
+ 180 0032 00C0      		rjmp .L5
+ 181               	/* epilogue start */
+ 115:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+ 183               	.LM9:
+ 184 0034 0895      		ret
+ 186               	.Lscope3:
+ 188               	.global	TWIStop
+ 190               	TWIStop:
+ 116:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 117:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** // Generate TWI stop signalm (Master only)
+ 118:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** void TWIStop(void)
+ 119:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 192               	.LM10:
+ 193               	.LFBB4:
+ 194               	/* prologue: function */
+ 195               	/* frame size = 0 */
+ 196               	/* stack size = 0 */
+ 197               	.L__stack_usage = 0
+ 120:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // TWI Control Register (p.231)
+ 121:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
+ 199               	.LM11:
+ 200 0036 ECEB      		ldi r30,lo8(-68)
+ 201 0038 F0E0      		ldi r31,0
+ 202 003a 8081      		ld r24,Z
+ 203 003c 8469      		ori r24,lo8(-108)
+ 204 003e 8083      		st Z,r24
+ 205 0040 0895      		ret
+ 207               	.Lscope4:
+ 210               	.global	TWIWrite
+ 212               	TWIWrite:
+ 122:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****             (1<<TWSTO) |   // generate a STOP condition on the TWI
+ 123:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     (1<<TWEN);      // enables TWI operation and activates the TWI interface
+ 124:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+ 125:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 126:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** // write a byte to TWI
+ 127:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** void TWIWrite(uint8_t data_byte)
+ 128:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 214               	.LM12:
+ 215               	.LFBB5:
+ 216               	/* prologue: function */
+ 217               	/* frame size = 0 */
+ 218               	/* stack size = 0 */
+ 219               	.L__stack_usage = 0
+ 129:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // TWI Data Register (p.232)
+ 130:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWDR = data_byte;
+ 221               	.LM13:
+ 222 0042 8093 BB00 		sts 187,r24
+ 131:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWCR =  (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
+ 224               	.LM14:
+ 225 0046 84E8      		ldi r24,lo8(-124)
+ 226 0048 8093 BC00 		sts 188,r24
+ 227               	.L10:
+ 132:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****             (1<<TWEN);     // enables TWI operation and activates the TWI interface
+ 133:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 134:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // wait until TWI has finished its current job
+ 135:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     while ((TWCR & (1<<TWINT)) == 0);
+ 229               	.LM15:
+ 230 004c 8091 BC00 		lds r24,188
+ 231 0050 87FF      		sbrs r24,7
+ 232 0052 00C0      		rjmp .L10
+ 233               	/* epilogue start */
+ 136:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+ 235               	.LM16:
+ 236 0054 0895      		ret
+ 238               	.Lscope5:
+ 241               	.global	TWIRead
+ 243               	TWIRead:
+ 137:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 138:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** // Read a byte form TWI, with or without an ACK
+ 139:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** uint8_t TWIRead(bool ack_signal)
+ 140:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 245               	.LM17:
+ 246               	.LFBB6:
+ 247               	/* prologue: function */
+ 248               	/* frame size = 0 */
+ 249               	/* stack size = 0 */
+ 250               	.L__stack_usage = 0
+ 141:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWCR =  (1<<TWINT) |            // Start the TWI/Clear the TWINT flag
+ 142:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****             (1<<TWEN)  |            // enables TWI operation and activates the TWI
+ 143:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****             (ack_signal<<TWEA);      // Generate the acknowledge pulse (or not)
+ 252               	.LM18:
+ 253 0056 20E4      		ldi r18,lo8(64)
+ 254 0058 829F      		mul r24,r18
+ 255 005a C001      		movw r24,r0
+ 256 005c 1124      		clr __zero_reg__
+ 141:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWCR =  (1<<TWINT) |            // Start the TWI/Clear the TWINT flag
+ 258               	.LM19:
+ 259 005e 8468      		ori r24,lo8(-124)
+ 260 0060 8093 BC00 		sts 188,r24
+ 261               	.L13:
+ 144:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 145:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // wait until TWI has finished its current job
+ 146:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     while ((TWCR & (1<<TWINT)) == 0);
+ 263               	.LM20:
+ 264 0064 8091 BC00 		lds r24,188
+ 265 0068 87FF      		sbrs r24,7
+ 266 006a 00C0      		rjmp .L13
+ 147:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     return TWDR;
+ 268               	.LM21:
+ 269 006c 8091 BB00 		lds r24,187
+ 148:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+ 271               	.LM22:
+ 272 0070 0895      		ret
+ 274               	.Lscope6:
+ 276               	.global	TWIGetStatus
+ 278               	TWIGetStatus:
+ 149:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 150:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** uint8_t TWIGetStatus(void)
+ 151:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 280               	.LM23:
+ 281               	.LFBB7:
+ 282               	/* prologue: function */
+ 283               	/* frame size = 0 */
+ 284               	/* stack size = 0 */
+ 285               	.L__stack_usage = 0
+ 152:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     uint8_t status;
+ 153:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     // mask the status
+ 154:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     status = TWSR & 0xF8;
+ 287               	.LM24:
+ 288 0072 8091 B900 		lds r24,185
+ 155:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     return status;
+ 156:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+ 290               	.LM25:
+ 291 0076 887F      		andi r24,lo8(-8)
+ 292 0078 0895      		ret
+ 294               	.Lscope7:
+ 299               	.global	sendColorsTWI
+ 301               	sendColorsTWI:
+ 157:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 158:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
+ 159:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** {
+ 303               	.LM26:
+ 304               	.LFBB8:
+ 305 007a 0F93      		push r16
+ 306 007c 1F93      		push r17
+ 307 007e CF93      		push r28
+ 308 0080 DF93      		push r29
+ 309 0082 1F92      		push __zero_reg__
+ 310 0084 CDB7      		in r28,__SP_L__
+ 311 0086 DEB7      		in r29,__SP_H__
+ 312               	/* prologue: function */
+ 313               	/* frame size = 1 */
+ 314               	/* stack size = 5 */
+ 315               	.L__stack_usage = 5
+ 316 0088 062F      		mov r16,r22
+ 317 008a 142F      		mov r17,r20
+ 160:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWIStart();
+ 319               	.LM27:
+ 320 008c 8983      		std Y+1,r24
+ 321 008e 0E94 0000 		call TWIStart
+ 322               	.LBB10:
+ 323               	.LBB11:
+ 154:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     status = TWSR & 0xF8;
+ 325               	.LM28:
+ 326 0092 9091 B900 		lds r25,185
+ 327 0096 987F      		andi r25,lo8(-8)
+ 328               	.LBE11:
+ 329               	.LBE10:
+ 161:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     if (TWIGetStatus() != START )           return ERROR;
+ 331               	.LM29:
+ 332 0098 8981      		ldd r24,Y+1
+ 333 009a 9830      		cpi r25,lo8(8)
+ 334 009c 01F0      		breq .L16
+ 335               	.L18:
+ 336 009e 81E0      		ldi r24,lo8(1)
+ 337 00a0 00C0      		rjmp .L17
+ 338               	.L16:
+ 162:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 163:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWIWrite(red);
+ 340               	.LM30:
+ 341 00a2 0E94 0000 		call TWIWrite
+ 342               	.LBB12:
+ 343               	.LBB13:
+ 154:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     status = TWSR & 0xF8;
+ 345               	.LM31:
+ 346 00a6 9091 B900 		lds r25,185
+ 347 00aa 987F      		andi r25,lo8(-8)
+ 348               	.LBE13:
+ 349               	.LBE12:
+ 164:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     if (TWIGetStatus() != MT_SLA_ACK )      return ERROR;
+ 351               	.LM32:
+ 352 00ac 9831      		cpi r25,lo8(24)
+ 353 00ae 01F4      		brne .L18
+ 165:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 166:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWIWrite(green);
+ 355               	.LM33:
+ 356 00b0 802F      		mov r24,r16
+ 357 00b2 0E94 0000 		call TWIWrite
+ 358               	.LBB14:
+ 359               	.LBB15:
+ 154:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     status = TWSR & 0xF8;
+ 361               	.LM34:
+ 362 00b6 9091 B900 		lds r25,185
+ 363 00ba 987F      		andi r25,lo8(-8)
+ 364               	.LBE15:
+ 365               	.LBE14:
+ 167:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
+ 367               	.LM35:
+ 368 00bc 9832      		cpi r25,lo8(40)
+ 369 00be 01F4      		brne .L18
+ 168:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 169:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWIWrite(blue);
+ 371               	.LM36:
+ 372 00c0 812F      		mov r24,r17
+ 373 00c2 0E94 0000 		call TWIWrite
+ 374               	.LBB16:
+ 375               	.LBB17:
+ 154:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     status = TWSR & 0xF8;
+ 377               	.LM37:
+ 378 00c6 8091 B900 		lds r24,185
+ 379 00ca 887F      		andi r24,lo8(-8)
+ 380               	.LBE17:
+ 381               	.LBE16:
+ 170:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
+ 383               	.LM38:
+ 384 00cc 8832      		cpi r24,lo8(40)
+ 385 00ce 01F4      		brne .L18
+ 171:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 172:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     TWIStop();
+ 387               	.LM39:
+ 388 00d0 0E94 0000 		call TWIStop
+ 173:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     return SUCCESS;
+ 390               	.LM40:
+ 391 00d4 80E0      		ldi r24,0
+ 392               	.L17:
+ 393               	/* epilogue start */
+ 174:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** }
+ 395               	.LM41:
+ 396 00d6 0F90      		pop __tmp_reg__
+ 397 00d8 DF91      		pop r29
+ 398 00da CF91      		pop r28
+ 399 00dc 1F91      		pop r17
+ 400 00de 0F91      		pop r16
+ 401 00e0 0895      		ret
+ 403               	.Lscope8:
+ 404               		.section	.text.startup,"ax",@progbits
+ 406               	.global	main
+ 408               	main:
+ 175:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 
+ 176:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** int main(void) {
+ 410               	.LM42:
+ 411               	.LFBB9:
+ 412               	/* prologue: function */
+ 413               	/* frame size = 0 */
+ 414               	/* stack size = 0 */
+ 415               	.L__stack_usage = 0
+ 177:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     
+ 178:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c **** 	initIO();
+ 417               	.LM43:
+ 418 0000 0E94 0000 		call initIO
+ 179:/Users/tedmyers/GitHub/testing-I2C/testing-I2C/testing-I2C/main.c ****     initTWI();
+ 420               	.LM44:
+ 421 0004 0E94 0000 		call initTWI
+ 422               	.L20:
+ 423 0008 00C0      		rjmp .L20
+ 425               	.Lscope9:
+ 426               		.text
+ 428               	.Letext0:
+ 429               		.ident	"GCC: (GNU) 4.8.1"
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:2      *ABS*:0000003e __SP_H__
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:3      *ABS*:0000003d __SP_L__
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:4      *ABS*:0000003f __SREG__
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:5      *ABS*:00000000 __tmp_reg__
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:6      *ABS*:00000001 __zero_reg__
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:112    .text:00000000 initIO
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:131    .text:00000008 initTWI
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:162    .text:00000022 TWIStart
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:190    .text:00000036 TWIStop
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:212    .text:00000042 TWIWrite
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:243    .text:00000056 TWIRead
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:278    .text:00000072 TWIGetStatus
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:301    .text:0000007a sendColorsTWI
+/var/folders/l2/bb4sdg190jl6980wclmsgs7h0000gr/T//ccfSren3.s:408    .text.startup:00000000 main
+
+NO UNDEFINED SYMBOLS

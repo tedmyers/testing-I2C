@@ -2,6 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <stdbool.h>
 
 #define RED_PIN     PD3
 #define GREEN_PIN   PD6
@@ -11,6 +12,13 @@
 #define BUTTON      PC3
 #define LED_DDR     DDRD
 #define LED_PORT    PORTD
+
+#define START       0x08
+#define MT_SLA_ACK  0x18
+#define MT_DATA_ACK 0x28
+
+#define ERROR   1
+#define SUCCESS 0
 
 /******************************
  
@@ -60,6 +68,8 @@ void initIO(void)
 {
     // initialize LED
     LED_DDR |= (1 << RED_PIN) | (1 << GREEN_PIN) | (1 << BLUE_PIN);
+    
+    // initialize TWI pins as outputs/inputs? (may be done in HW later)
 }
 
 void initTWI(void)
@@ -71,7 +81,7 @@ void initTWI(void)
     TWBR = 0x01;
     
     // TWI Control Register (p.231)
-    TWCR |= (1<<TWEN);
+    TWCR |= (1<<TWEN); // enable TWI
     
     
     // Question: is the F_CPU here already prescaled or not?
@@ -87,22 +97,118 @@ void initTWI(void)
      */
 }
 
+// possibly: have these functions return a bool
+// make them all check a status register, and program
+// reports an error if the bool is false
 
+// Generate TWI start signal (Master only)
+void TWIStart(void)
+{
+    // TWI Control Register (p.231)
+    TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
+            (1<<TWSTA) |   // Checks if bus is open, writes START when available
+            (1<<TWEN);      // enables TWI operation and activates the TWI interface
+    
+    // Wait until TWI has finished its current job
+    // Replace this with interrupt based routine next
+    while ((TWCR & (1<<TWINT)) == 0);
+}
 
+// Generate TWI stop signalm (Master only)
+void TWIStop(void)
+{
+    // TWI Control Register (p.231)
+    TWCR |= (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
+            (1<<TWSTO) |   // generate a STOP condition on the TWI
+    (1<<TWEN);      // enables TWI operation and activates the TWI interface
+}
 
-// function to send data over TWI
+// write a byte to TWI
+void TWIWrite(uint8_t data_byte)
+{
+    // TWI Data Register (p.232)
+    TWDR = data_byte;
+    TWCR =  (1<<TWINT) |   // Start the TWI/Clear the TWINT flag
+            (1<<TWEN);     // enables TWI operation and activates the TWI interface
+    
+    // wait until TWI has finished its current job
+    while ((TWCR & (1<<TWINT)) == 0);
+}
 
-// function to receive data over TWI
+// Read a byte form TWI, with or without an ACK
+uint8_t TWIRead(bool ack_signal)
+{
+    TWCR =  (1<<TWINT) |            // Start the TWI/Clear the TWINT flag
+            (1<<TWEN)  |            // enables TWI operation and activates the TWI
+            (ack_signal<<TWEA);      // Generate the acknowledge pulse (or not)
+    
+    // wait until TWI has finished its current job
+    while ((TWCR & (1<<TWINT)) == 0);
+    return TWDR;
+}
+
+uint8_t TWIGetStatus(void)
+{
+    uint8_t status;
+    // mask the status
+    status = TWSR & 0xF8;
+    return status;
+}
+
+uint8_t sendColorsTWI(uint8_t red, uint8_t green, uint8_t blue)
+{
+    TWIStart();
+    if (TWIGetStatus() != START )           return ERROR;
+    
+    TWIWrite(red);
+    if (TWIGetStatus() != MT_SLA_ACK )      return ERROR;
+    
+    TWIWrite(green);
+    if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
+    
+    TWIWrite(blue);
+    if (TWIGetStatus() != MT_DATA_ACK )     return ERROR;
+    
+    TWIStop();
+    return SUCCESS;
+}
 
 int main(void) {
     
 	initIO();
     initTWI();
+    
+    uint8_t delay_amount = 20;
+    uint8_t red_data, green_data, blue_data;
+    
+    while (1) {
+    
+        // set true if Master
+        #ifdef true
+        
+        // fade all colors up
+        for (int i = 0; i < 256; i++)
+        {
+            sendColorsTWI(i,i,i);
+            _delay_ms(delay_amount);
+        }
+        // fade all colors down
+        for (int j = 255; j >= 0; j--)
+        {
+            sendColorsTWI(i,i,i);
+            _delay_ms(delay_amount);
+        }
 
-	while (1) {
         
-        //
+        #endif
         
+        
+        // set false if Slave
+        #ifdef false
+        
+        #endif
+    
+
 	}
 
 	return 0; // never reached
