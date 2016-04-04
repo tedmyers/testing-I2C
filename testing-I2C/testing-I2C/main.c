@@ -170,7 +170,7 @@ uint8_t receiveColorsTWI(uint8_t *red, uint8_t *green, uint8_t *blue)
 int main(void) {
     
 	initIO();
-    initTWI();
+    initTWI(MASTER_SENDER_MODE);
     
     uint8_t delay_amount = 20;
     uint8_t red_data, green_data, blue_data;
@@ -203,7 +203,7 @@ int main(void) {
         
         for (;;)
         {
-            receiveColorsTWI(&red_data, &green_data, &blue_data)
+            receiveColorsTWI(&red_data, &green_data, &blue_data);
         }
         
         // set false if Slave
